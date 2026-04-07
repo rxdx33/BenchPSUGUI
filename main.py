@@ -3,11 +3,10 @@ import pyvisa as visa
 
 # Macros
 DEBUG = False
+rm = visa.ResourceManager()
 instrument = None  # Global handle to the PSU
 
 def connectToResource(resource):
-    rm = visa.ResourceManager()
-
     global instrument
     if instrument:
         try:
@@ -59,17 +58,16 @@ def setVoltageCurrent(voltageVar, currentVar):
         print(f"No PSU detected!")
 
 def getLiveReadings(instrument):
+    voltage, current = None, None
     try:
         voltage = float(instrument.query('VOUT1?').strip())
-        # print("Voltage reading: " + voltage)
-        
         current = float(instrument.query('IOUT1?').strip())
+        # print("Voltage reading: " + voltage)    
         # print("Current reading: " + current)
     except visa.VisaIOError:
-        pass
+        print(f"VISA error reading from instrument: {e}")
     except Exception as e:
-        raise Exception(e)
-    
+        print(f"Unexpected error: {e}")
     return voltage, current
 
 def onClose(app):
@@ -84,12 +82,15 @@ def guiSetup():
     def handleLiveReadings():
         if instrument:
             voltage, current = getLiveReadings(instrument)
-
-            getVoltageLabel.configure(text=f"Voltage: {voltage} A")
+        if voltage is not None and current is not None:
+            getVoltageLabel.configure(text=f"Voltage: {voltage} V")
             getCurrentLabel.configure(text=f"Current: {current} A")
-
-            # Recursively update every 1 second
-            app.after(1000, handleLiveReadings)  
+        else:
+            getVoltageLabel.configure(text="Voltage: Error")
+            getCurrentLabel.configure(text="Current: Error")
+            return  # stop polling on error
+        # Recursively update every second
+        app.after(1000, handleLiveReadings) 
 
     # GUI setup
     ctk.set_appearance_mode("System")
@@ -109,7 +110,6 @@ def guiSetup():
     labelSelect = ctk.CTkLabel(mainFrame, text="Set PSU instrument:")
     labelSelect.grid(row=1, column=0, sticky='w', padx=(5, 0), pady=(5, 0))
 
-    rm = visa.ResourceManager()
     availableResources = rm.list_resources()
     selectedResource = ctk.StringVar(value="Select a power supply...")
 
