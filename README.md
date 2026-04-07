@@ -1,6 +1,6 @@
 # BenchPSUGUI
 
-A simple Python desktop application for controlling VISA-compatible bench power supplies via a clean GUI built with CustomTkinter.
+A simple Python desktop application for controlling VISA-compatible bench power supplies (specifically TENMA) via a clean GUI built with CustomTkinter.
 
 ## Features
 
