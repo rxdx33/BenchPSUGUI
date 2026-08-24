@@ -5,6 +5,7 @@ import pyvisa as visa
 DEBUG = False
 rm = visa.ResourceManager()
 instrument = None  # Global handle to the PSU
+psuOn = False
 
 def connectToResource(resource):
     global instrument
@@ -24,14 +25,17 @@ def connectToResource(resource):
         instrument = None
 
 def psuEnable(bEnable):
+    global psuOn
     if instrument:
         try:
             if bEnable:
                 instrument.write('OUT1')
                 print("PSU ON")
+                psuOn = True
             else:
                 instrument.write('OUT0')
                 print("PSU OFF")
+                psuOn = False
         except Exception as e:
             print(f"Failed to turn PSU ON: {e}")
     else:
@@ -89,8 +93,9 @@ def guiSetup():
             getVoltageLabel.configure(text="Voltage: Error")
             getCurrentLabel.configure(text="Current: Error")
             return  # stop polling on error
+
         # Recursively update every second
-        app.after(1000, handleLiveReadings) 
+        app.after(500, handleLiveReadings) 
 
     # GUI setup
     ctk.set_appearance_mode("System")
